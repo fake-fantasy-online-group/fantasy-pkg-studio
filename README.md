@@ -14,8 +14,27 @@ npm start
 npm run package:app
 ```
 
-桌面产物输出到 `dist/`，使用当前平台打包。不同平台需分别运行验证，不自动发布。
+桌面产物输出到 `dist/`，使用当前平台打包。该命令只生成本地文件，不发布 GitHub Release。
 保留已有 VS Code 插件打包入口 `npm run package:plugin`，独立应用不依赖安装该插件。
+
+### 自动发布桌面安装包
+
+推送符合当前 `package.json` 与 `package-lock.json` 版本的 `vX.Y.Z` 标签会启动 GitHub Actions 发布；也可以在 Actions 的 **Desktop release** 工作流中从 `main` 手动选择一个已经推送的标签。标签提交必须已合入 `main`。带 prerelease 后缀的版本（如 `v0.2.0-rc.1`）会标记为预发布版。一个版本只选一种触发方式，避免同时启动两个相同版本的发布。
+
+发布前先更新版本、提交到 `main` 并推送，再创建和推送标签：
+
+```sh
+npm version 0.2.0 --no-git-tag-version
+git add package.json package-lock.json
+git commit -m "chore: release v0.2.0"
+git push origin main
+git tag -a v0.2.0 -m "Fake Fantasy Editor v0.2.0"
+git push origin v0.2.0
+```
+
+每次发布包含 macOS arm64 与 x64 的 DMG/ZIP、Windows x64 的安装程序/ZIP，以及 Linux x64 的 AppImage/DEB；发布还附带 `SHA256SUMS`。工作流先在所有平台完成打包，再一次性发布完整草稿。失败时不会公开不完整版本；可重跑工作流以补齐已有草稿。已发布版本不可由此工作流覆盖。
+
+安装包没有配置开发者证书或公证：macOS 使用临时 ad-hoc 签名，Windows 与 Linux 包未签名。首次打开时系统可能显示来源提示；本工作流不代表跨平台运行验收。Blender 仍需用户自行安装。
 
 ## 工程与使用
 

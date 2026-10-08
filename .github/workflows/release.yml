@@ -1,0 +1,208 @@
+name: Desktop release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to release
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    timeout-minutes: 5
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
+      sha: ${{ steps.version.outputs.sha }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - name: Require manual releases to use the main branch
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          WORKFLOW_REF: ${{ github.ref }}
+        run: |
+          if [[ "$WORKFLOW_REF" != "refs/heads/main" ]]; then
+            echo "Manual releases must be started from the main branch." >&2
+            exit 1
+          fi
+
+      - name: Select release tag
+        id: select-tag
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          PUSH_TAG: ${{ github.ref_name }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            RELEASE_TAG="$INPUT_TAG"
+          else
+            RELEASE_TAG="$PUSH_TAG"
+          fi
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Release tag must use vX.Y.Z or vX.Y.Z-prerelease syntax." >&2
+            exit 1
+          fi
+          printf 'tag=%s\n' "$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Check out selected tag
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: refs/tags/${{ steps.select-tag.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Fetch current main for ancestry validation
+        run: git fetch --no-tags origin main:refs/remotes/origin/main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      - name: Validate version tag and source commit
+        id: version
+        env:
+          RELEASE_TAG: ${{ steps.select-tag.outputs.tag }}
+        run: node scripts/release-assets.cjs validate "$RELEASE_TAG"
+
+  build:
+    timeout-minutes: 40
+    needs: validate
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14
+            platform: mac
+            arch: arm64
+            builderArch: arm64
+          - runner: macos-15-intel
+            platform: mac
+            arch: x64
+            builderArch: x64
+          - runner: windows-2022
+            platform: win
+            arch: x64
+            builderArch: x64
+          - runner: ubuntu-24.04
+            platform: linux
+            arch: x64
+            builderArch: x64
+    steps:
+      - name: Check out validated source commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.validate.outputs.sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Package desktop installer
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npm run package:app -- --${{ matrix.platform }} ${{ matrix.platform == 'mac' && 'dmg zip' || matrix.platform == 'win' && 'nsis zip' || 'AppImage deb' }} --${{ matrix.builderArch }}
+
+      - name: Stage expected installer files
+        run: node scripts/release-assets.cjs stage ${{ matrix.platform }} ${{ matrix.arch }}
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: installers-${{ matrix.platform }}-${{ matrix.arch }}
+          path: release-assets/*
+          if-no-files-found: error
+          retention-days: 2
+
+  publish:
+    timeout-minutes: 15
+    needs: [validate, build]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Check out validated source commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.validate.outputs.sha }}
+          persist-credentials: false
+
+      - name: Download all installer artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      - name: Verify complete installer set and create checksums
+        run: node scripts/release-assets.cjs collect
+
+      - name: Set up GitHub CLI
+        run: gh --version
+
+      - name: Create or resume the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.validate.outputs.tag }}
+          RELEASE_SHA: ${{ needs.validate.outputs.sha }}
+        run: |
+          git fetch --no-tags origin "refs/tags/$RELEASE_TAG"
+          test "$(git rev-parse 'FETCH_HEAD^{commit}')" = "$RELEASE_SHA"
+          cat > "$RUNNER_TEMP/release-notes.md" <<'NOTES'
+          桌面安装包包含 Windows x64、macOS Apple Silicon / Intel、Linux x64 版本，附 SHA256SUMS。
+
+          - macOS 使用 ad-hoc 签名，未做 Apple 公证；Windows 安装包未配置代码签名。
+          - 3D 转二维功能需要另外安装 Blender 4.2 或更新版本；安装包不包含 Blender 或游戏资源。
+          - 本发布验证了打包与上传流程，不代表各平台的应用功能已完成运行验收。
+          NOTES
+          release_json="$RUNNER_TEMP/release.json"
+          if gh release view "$RELEASE_TAG" --json isDraft,assets > "$release_json" 2>/dev/null; then
+            node scripts/release-assets.cjs check-draft "$release_json"
+          else
+            gh release create "$RELEASE_TAG" \
+              --draft \
+              --verify-tag \
+              --generate-notes \
+              --notes-file "$RUNNER_TEMP/release-notes.md" \
+              --title "Fake Fantasy Editor $RELEASE_TAG"
+          fi
+          gh release upload "$RELEASE_TAG" release-assets/* --clobber
+          gh release view "$RELEASE_TAG" --json isDraft,assets > "$release_json"
+          node scripts/release-assets.cjs check-complete "$release_json"
+
+      - name: Publish the complete release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.validate.outputs.tag }}
+          PRERELEASE: ${{ needs.validate.outputs.prerelease }}
+          RELEASE_SHA: ${{ needs.validate.outputs.sha }}
+        run: |
+          git fetch --no-tags origin "refs/tags/$RELEASE_TAG"
+          test "$(git rev-parse 'FETCH_HEAD^{commit}')" = "$RELEASE_SHA"
+          publish_args=(--draft=false)
+          if [[ "$PRERELEASE" == "true" ]]; then
+            publish_args+=(--prerelease)
+          fi
+          gh release edit "$RELEASE_TAG" "${publish_args[@]}"

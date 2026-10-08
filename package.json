@@ -4,10 +4,14 @@
   "private": true,
   "license": "MIT",
   "description": "Fake Fantasy Editor desktop application",
+  "author": {
+    "name": "Fake Fantasy Online Group"
+  },
+  "homepage": "https://github.com/fake-fantasy-online-group/fantasy-pkg-studio",
   "main": "src/main.cjs",
   "scripts": {
     "start": "electron .",
-    "package:app": "electron-builder",
+    "package:app": "electron-builder --publish never",
     "package:plugin": "npm --prefix extensions/pkg-studio run package:runtime && node scripts/package-plugin.cjs"
   },
   "dependencies": {
@@ -21,6 +25,7 @@
   "build": {
     "appId": "com.fantasy.pkg-studio",
     "productName": "Fake Fantasy Editor",
+    "artifactName": "fake-fantasy-editor-${version}-${os}-${arch}.${ext}",
     "asar": true,
     "files": [
       "src/main.cjs",
@@ -63,6 +68,14 @@
     ],
     "directories": {
       "output": "dist"
+    },
+    "mac": {
+      "identity": "-",
+      "hardenedRuntime": false
+    },
+    "linux": {
+      "maintainer": "Fake Fantasy Online Group",
+      "category": "Utility"
     }
   }
 }
