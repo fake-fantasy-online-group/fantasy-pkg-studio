@@ -24,6 +24,13 @@
     "asar": true,
     "files": [
       "src/main.cjs",
+      "src/model-preload.cjs",
+      "src/model-service.cjs",
+      "src/model-render.py",
+      "src/dimg-encode.cjs",
+      "src/model-studio.html",
+      "src/model-studio.js",
+      "src/model-studio.css",
       "src/preload.cjs",
       "src/worker.cjs",
       "src/project.cjs",

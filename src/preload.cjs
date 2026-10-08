@@ -5,6 +5,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 const invoke = (channel, ...args) => ipcRenderer.invoke(channel, ...args);
 
 contextBridge.exposeInMainWorld('pkgStudio', Object.freeze({
+  openModelStudio: (id = null) => invoke('pkg:model:open', id),
   openArchive: () => invoke('pkg:open'),
   openProject: () => invoke('pkg:project:open'),
   importTableSchema: () => invoke('pkg:table-schema:import'),

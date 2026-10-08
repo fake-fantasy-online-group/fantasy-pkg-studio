@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'; connect-src 'none';">
+  <title>3D 模型转换</title>
+  <link rel="stylesheet" href="./model-studio.css">
+  <script defer src="./model-studio.js"></script>
+</head>
+<body>
+  <div class="studio-shell">
+    <header class="titlebar"><span id="projectTitle">3D 模型转换</span><span class="titlebar-note" id="blenderStatus">正在检查 Blender…</span></header>
+    <main class="studio-workbench">
+      <aside class="source-pane" aria-label="待转换模型">
+        <div class="pane-heading"><span>模型</span><span class="count" id="sourceCount">0</span></div>
+        <div class="source-list" id="sourceList" role="listbox" aria-label="模型队列" tabindex="0">
+          <div class="empty-list">通过“3D → 添加模型…”导入</div>
+        </div>
+        <div class="source-footer"><span id="projectPath" title="">未打开 PKG 工程</span></div>
+      </aside>
+      <section class="workspace" aria-label="模型转换设置">
+        <div class="toolbar">
+          <div class="toolbar-left"><span class="file-mark">3D</span><span class="selected-name" id="selectedName">未选择模型</span><span class="source-format" id="sourceFormat"></span></div>
+          <div class="toolbar-actions">
+            <button type="button" class="primary-button" id="previewButton" disabled>预览当前帧</button>
+            <button type="button" class="primary-button" id="renderButton" disabled>转换选中模型</button>
+          </div>
+        </div>
+        <div class="studio-content">
+          <section class="preview-column" aria-label="渲染预览">
+            <div class="preview-head"><span>预览</span><span id="artifactState">尚未转换</span></div>
+            <div class="preview-stage" id="previewStage"><div class="preview-empty">选择模型并生成预览</div></div>
+            <div class="scrubber">
+              <label for="directionSelect">方向</label><select id="directionSelect" disabled></select>
+              <button type="button" class="scrub-button" id="previousFrame" disabled aria-label="上一帧">‹</button>
+              <input type="range" id="frameRange" min="0" max="0" value="0" disabled aria-label="动画帧">
+              <button type="button" class="scrub-button" id="nextFrame" disabled aria-label="下一帧">›</button>
+              <output id="frameLabel">—</output>
+            </div>
+            <div class="preview-message" id="previewMessage" aria-live="polite"></div>
+          </section>
+          <section class="settings-column" aria-label="转换参数">
+            <div class="settings-scroll">
+              <section class="setting-group">
+                <div class="group-title">输出目标</div>
+                <label class="field-row"><span>工程条目</span><select id="targetSelect"><option value="">仅导出到目录</option></select></label>
+                <label class="field-row"><span>条目角色</span><select id="roleSelect"><option value="body">主体</option><option value="part">部件</option></select></label>
+                <label class="field-row"><span>输出倍率</span><select id="scaleSelect"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+                <div class="target-summary" id="targetSummary">未选择工程条目。转换结果可另存为目录。</div>
+              </section>
+              <section class="setting-group">
+                <div class="group-title">动画</div>
+                <label class="field-row"><span>动作</span><select id="animationSelect"><option value="">默认时间线</option></select></label>
+                <div class="field-grid two">
+                  <label class="field"><span>起始帧</span><input id="startFrame" type="number" min="-100000" max="100000" step="1"></label>
+                  <label class="field"><span>结束帧</span><input id="endFrame" type="number" min="-100000" max="100000" step="1"></label>
+                </div>
+                <div class="field-grid two output-fields">
+                  <label class="field"><span>逻辑宽度</span><input id="width" type="number" min="8" max="2048" step="1"></label>
+                  <label class="field"><span>逻辑高度</span><input id="height" type="number" min="8" max="2048" step="1"></label>
+                  <label class="field"><span>方向数</span><input id="directions" type="number" min="1" max="16" step="1"></label>
+                  <label class="field"><span>每方向帧数</span><input id="framesPerDirection" type="number" min="1" max="128" step="1"></label>
+                </div>
+              </section>
+              <section class="setting-group">
+                <div class="group-title">模型变换</div>
+                <label class="field-row"><span>模型缩放</span><input id="modelScale" type="number" min="0.05" max="10" step="0.1"></label>
+                <div class="field-grid three">
+                  <label class="field"><span>旋转 X°</span><input id="rotationX" type="number" min="-360" max="360" step="1"></label>
+                  <label class="field"><span>旋转 Y°</span><input id="rotationY" type="number" min="-360" max="360" step="1"></label>
+                  <label class="field"><span>旋转 Z°</span><input id="rotationZ" type="number" min="-360" max="360" step="1"></label>
+                </div>
+              </section>
+              <section class="setting-group">
+                <div class="group-title">相机与灯光</div>
+                <div class="field-grid two">
+                  <label class="field"><span>方位角°</span><input id="azimuth" type="number" min="-360" max="360" step="1"></label>
+                  <label class="field"><span>俯仰角°</span><input id="elevation" type="number" min="1" max="89" step="1"></label>
+                  <label class="field"><span>水平偏移</span><input id="offsetX" type="number" min="-2048" max="2048" step="1"></label>
+                  <label class="field"><span>垂直偏移</span><input id="offsetY" type="number" min="-2048" max="2048" step="1"></label>
+                  <label class="field"><span>正交高度</span><input id="orthoHeight" type="number" min="0" max="100000" step="0.1"></label>
+                  <label class="field"><span>灯光能量</span><input id="lightEnergy" type="number" min="0" max="100000" step="50"></label>
+                </div>
+              </section>
+            </div>
+          </section>
+        </div>
+        <footer class="studio-footer">
+          <div class="footer-status"><span class="status-led" id="statusLed"></span><span id="statusText">就绪</span><div class="progress-track hidden" id="progressTrack"><div class="progress-fill indeterminate"></div></div><button type="button" id="cancelButton" class="cancel-button hidden">取消</button></div>
+        </footer>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

@@ -5,6 +5,11 @@ app.setName('Fake Fantasy Editor');
 
 const path = require('node:path');
 const { Worker } = require('node:worker_threads');
+const fsp = require('node:fs/promises');
+const { spawn } = require('node:child_process');
+
+let modelWindow;
+let modelInitialTarget = null;
 
 let windowRef;
 let worker;
@@ -18,7 +23,7 @@ let closePromptOpen = false;
 let rendererDirty = false;
 let workerFailed = false;
 const pending = new Map();
-const MUTATIONS = new Set(['createProject', 'openProject', 'refreshProject', 'replaceFile', 'replaceDirectory', 'stageFile', 'stageDirectory', 'stageFolder', 'stageText', 'resetEntry', 'resetAll', 'importEditable', 'importTableSchema', 'clearTableSchema', 'repack']);
+const MUTATIONS = new Set(['modelConfigure', 'modelAddSources', 'modelRemoveSource', 'modelInspect', 'modelRender', 'modelApply', 'modelExport', 'modelEdit', 'createProject', 'openProject', 'refreshProject', 'replaceFile', 'replaceDirectory', 'stageFile', 'stageDirectory', 'stageFolder', 'stageText', 'resetEntry', 'resetAll', 'importEditable', 'importTableSchema', 'clearTableSchema', 'repack']);
 
 function dirtyState() {
   return rendererDirty || workerFailed;
@@ -43,6 +48,96 @@ function sendTask(method, args = {}) {
 
 function dialogOptions(properties, options = {}) {
   return { properties, ...options };
+}
+
+async function openModelWindow(targetId = null) {
+  modelInitialTarget = targetId === null || targetId === undefined ? null : String(targetId);
+  if (modelWindow && !modelWindow.isDestroyed()) {
+    modelWindow.show(); modelWindow.focus();
+    if (modelInitialTarget !== null) modelWindow.webContents.send('model:command', { command: 'target', id: modelInitialTarget });
+    return;
+  }
+  modelWindow = new BrowserWindow({ width: 1150, height: 820, minWidth: 900, minHeight: 640,
+    title: '3D 素材转换 · Fake Fantasy Editor', backgroundColor: '#1e1e1e',
+    webPreferences: { preload: path.join(__dirname, 'model-preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
+  const current = modelWindow;
+  current.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  current.webContents.on('will-navigate', event => event.preventDefault());
+  current.on('close', event => {
+    if ([...pending.values()].some(item => item.method.startsWith('model'))) {
+      event.preventDefault();
+      dialog.showMessageBox(current, { type: 'info', message: '转换任务仍在进行，请先取消任务或等待完成。', buttons: ['知道了'] });
+    }
+  });
+  current.on('closed', () => {
+    if (modelWindow === current) {
+      modelWindow = null;
+      if (!shuttingDown) sendTask('modelReset').catch(() => {});
+    }
+  });
+  await current.loadFile(path.join(__dirname, 'model-studio.html'));
+}
+async function sendModelCommand(command) {
+  try {
+    if (!modelWindow || modelWindow.isDestroyed()) await openModelWindow();
+    modelWindow.webContents.send('model:command', command);
+  } catch (error) { dialog.showErrorBox('无法打开 3D 转换', error.message); }
+}
+function registerModelIpc() {
+  const handle = (channel, action) => ipcMain.handle(channel, async (event, ...args) => {
+    if (!modelWindow || event.sender !== modelWindow.webContents || event.senderFrame !== modelWindow.webContents.mainFrame) {
+      throw new Error('无效的转换窗口请求');
+    }
+    return action(...args);
+  });
+  ipcMain.handle('pkg:model:open', async (event, id) => {
+    if (event.sender !== windowRef?.webContents) throw new Error('无效窗口');
+    await openModelWindow(id); return {};
+  });
+  handle('model:status', async () => ({ ...(await sendTask('modelStatus')), initialTargetId: modelInitialTarget }));
+  handle('model:add', async () => {
+    const result = await dialog.showOpenDialog(modelWindow, { title: '添加 3D 模型', properties: ['openFile', 'multiSelections'],
+      filters: [{ name: '3D 模型', extensions: ['glb', 'gltf', 'fbx', 'obj', 'blend', 'stl', 'ply'] }] });
+    if (result.canceled) return { canceled: true };
+    return sendTask('modelAddSources', { paths: result.filePaths });
+  });
+  handle('model:configure', async () => {
+    const result = await dialog.showOpenDialog(modelWindow, { title: '选择 Blender 程序（macOS 可选择 Blender.app）', properties: ['openFile'] });
+    if (result.canceled) return { canceled: true };
+    const configured = await sendTask('modelConfigure', { path: result.filePaths[0] });
+    await fsp.writeFile(path.join(app.getPath('userData'), 'model-converter.json'), JSON.stringify(configured), { mode: 0o600 });
+    return configured;
+  });
+  handle('model:inspect', sourceId => sendTask('modelInspect', { sourceId }));
+  handle('model:describe', (id, scale, role) => sendTask('modelDescribeTarget', { id, scale, role }));
+  handle('model:render', jobs => sendTask('modelRender', { jobs }));
+  handle('model:frame', (id, index) => sendTask('modelFrame', { id, index }));
+  handle('model:discard', id => sendTask('modelDiscard', { id }));
+  handle('model:remove', sourceId => sendTask('modelRemoveSource', { sourceId }));
+  handle('model:cancel', () => { worker?.postMessage({ method: 'cancelModel' }); return {}; });
+  handle('model:export', async ids => {
+    const result = await dialog.showOpenDialog(modelWindow, { title: '导出二维素材到目录', properties: ['openDirectory', 'createDirectory'] });
+    if (result.canceled) return { canceled: true };
+    return sendTask('modelExport', { ids, directory: result.filePaths[0] });
+  });
+  handle('model:apply', async ids => {
+    const result = await sendTask('modelApply', { ids });
+    if (result.results.some(item => item.ok)) sendCommand('refreshProject');
+    return result;
+  });
+  handle('model:edit', async sourceId => {
+    const save = await dialog.showSaveDialog(modelWindow, { title: '另存 Blender 工作副本', defaultPath: 'model-workspace.blend',
+      filters: [{ name: 'Blender 工作文件', extensions: ['blend'] }] });
+    if (save.canceled || !save.filePath) return { canceled: true };
+    const result = await sendTask('modelEdit', { sourceId, path: save.filePath });
+    // A working copy, never the imported original. No shell interpolation or source scripts.
+    await new Promise((resolve, reject) => {
+      const child = spawn(result.blender, ['--factory-startup', '--disable-autoexec', result.path], { shell: false, detached: true, stdio: 'ignore' });
+      child.once('error', reject);
+      child.once('spawn', () => { child.unref(); resolve(); });
+    });
+    return { source: result.source };
+  });
 }
 
 function registerIpc() {
@@ -179,6 +274,28 @@ function installApplicationMenu() {
       ],
     },
     {
+      label: '3D',
+      submenu: [
+        { label: '3D 素材转换…', click: () => openModelWindow().catch(error => dialog.showErrorBox('3D 转换', error.message)) },
+        { label: '添加模型…', click: () => sendModelCommand('add') },
+        { label: '读取动画列表', click: () => sendModelCommand('inspect') },
+        { label: '在 Blender 中编辑工作副本…', click: () => sendModelCommand('edit') },
+        { type: 'separator' },
+        { label: '预览当前帧', click: () => sendModelCommand('preview') },
+        { label: '转换当前模型', click: () => sendModelCommand('render') },
+        { label: '批量转换全部模型', click: () => sendModelCommand('renderAll') },
+        { label: '将当前参数应用到全部模型', click: () => sendModelCommand('copySettings') },
+        { type: 'separator' },
+        { label: '导出当前结果…', click: () => sendModelCommand('export') },
+        { label: '批量导出结果…', click: () => sendModelCommand('exportAll') },
+        { label: '写入当前映射资源', click: () => sendModelCommand('apply') },
+        { label: '批量写入映射资源', click: () => sendModelCommand('applyAll') },
+        { type: 'separator' },
+        { label: '移除当前模型', click: () => sendModelCommand('remove') },
+        { label: '选择 Blender…', click: () => sendModelCommand('configure') },
+      ],
+    },
+    {
       label: '资源',
       submenu: [
         { label: '关联表定义…', click: () => sendCommand('importTableSchema') },
@@ -253,6 +370,7 @@ function createWorker() {
   activeWorker.on('message', (message) => {
     if (message?.type === 'progress') {
       if (windowRef && !windowRef.isDestroyed()) windowRef.webContents.send('pkg:progress', message.progress);
+      if (modelWindow && !modelWindow.isDestroyed()) modelWindow.webContents.send('model:progress', message.progress);
       return;
     }
     const item = pending.get(message?.requestId);
@@ -300,9 +418,14 @@ function createWindow() {
   windowRef.loadFile(path.join(__dirname, 'index.html'));
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   createWorker();
+  try {
+    const saved = JSON.parse(await fsp.readFile(path.join(app.getPath('userData'), 'model-converter.json'), 'utf8'));
+    if (typeof saved.blender === 'string') await sendTask('modelConfigure', { path: saved.blender });
+  } catch (_) { /* A missing optional Blender installation is shown in the converter. */ }
   registerIpc();
+  registerModelIpc();
   installApplicationMenu();
   createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });

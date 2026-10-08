@@ -20,6 +20,10 @@ const { readMapLogic } = require('./map-logic.cjs');
 const { attachMapLogic } = require('./scene-contract.cjs');
 const { makeWorldResourcePreview } = require('./world-resource-preview.cjs');
 const projectStore = require('./project.cjs');
+const { ModelService } = require('./model-service.cjs');
+const modelCodec = require('./dimg-encode.cjs');
+const models = new ModelService();
+let modelCanceled = false;
 
 let project = null;
 let archive = null;
@@ -34,6 +38,7 @@ const MAX_TEXT_BYTES = 2 * 1024 * 1024;
 let dispatchQueue = Promise.resolve();
 
 function entryId(entry) { return String(entry.id); }
+function modelProjectKey() { return project ? `${project.directory}\n${project.metadata.source.sha256}` : ''; }
 
 function requireArchive() {
   if (!archive) throw new Error('请先打开 PKG 文件');
@@ -344,6 +349,81 @@ async function assertRegularNoSymlink(filePath) {
 }
 
 async function dispatch(method, args, requestId) {
+  if (method === 'modelReset') { await models.dispose(); return {}; }
+  if (method === 'modelStatus') return { ...(await models.status()), projectPath: project?.directory || '',
+    entries: archive ? serializableEntries(archive.entries.filter(entry => /\.(gsn|gso)$/i.test(entry.name))).map(entry => ({ ...entry, id: String(entry.id) })) : [] };
+  if (method === 'modelConfigure') return models.configure(args.path);
+  if (method === 'modelAddSources') return { sources: await models.addSources(args.paths) };
+  if (method === 'modelRemoveSource') { await models.removeSource(args.sourceId); return {}; }
+  if (method === 'modelInspect') return models.inspect(args.sourceId, value => progress(requestId, value));
+  if (method === 'modelDescribeTarget') {
+    const entry = requireEntry(args.id);
+    if (!/\.(gsn|gso)$/i.test(entry.name)) throw new Error('替换目标必须是 GSN/GSO 资源');
+    return modelCodec.describeTemplate(await projectStore.readEntry(project, entry.id), args.scale, args.role);
+  }
+  if (method === 'modelRender') {
+    if (!Array.isArray(args.jobs) || args.jobs.length < 1 || args.jobs.length > 64) throw new Error('转换队列必须包含 1–64 个模型');
+    modelCanceled = false;
+    const results = [];
+    for (let index = 0; index < args.jobs.length; index++) {
+      if (modelCanceled) break;
+      const job = args.jobs[index];
+      try {
+        let template = null;
+        if (job.targetId !== null && job.targetId !== undefined && job.targetId !== '') {
+          if (job.projectPath !== project?.directory) throw new Error('目标工程已切换，请重新选择资源映射');
+          const entry = requireEntry(job.targetId);
+          if (!/\.(gsn|gso)$/i.test(entry.name)) throw new Error('替换目标必须是 GSN/GSO 资源');
+          const buffer = await projectStore.readEntry(project, entry.id);
+          template = { buffer, id: String(entry.id), name: entry.name, sha256: crypto.createHash('sha256').update(buffer).digest('hex') };
+        }
+        progress(requestId, { done: index, total: args.jobs.length, message: `转换模型 ${index + 1}/${args.jobs.length}` });
+        const artifact = await models.render(job, template, modelProjectKey(), value => progress(requestId, value));
+        results.push({ sourceId: job.sourceId, ok: true, artifact });
+      } catch (error) { results.push({ sourceId: job?.sourceId, ok: false, error: error.message }); }
+    }
+    return { results, canceled: modelCanceled };
+  }
+  if (method === 'modelFrame') return models.frame(args.id, args.index);
+  if (method === 'modelDiscard') { await models.discard(args.id); return {}; }
+  if (method === 'modelExport' || method === 'modelEdit') {
+    if (project) {
+      const directory = await fsp.realpath(method === 'modelExport' ? args.directory : path.dirname(args.path));
+      const relative = path.relative(await fsp.realpath(project.directory), directory);
+      if (relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative))) {
+        throw new Error('请选择工程目录之外的位置保存转换产物');
+      }
+    }
+    return method === 'modelExport' ? { results: await models.export(args.ids, args.directory) }
+      : models.prepareEdit(args.sourceId, args.path, value => progress(requestId, value));
+  }
+  if (method === 'modelApply') {
+    requireArchive();
+    if (!Array.isArray(args.ids) || args.ids.length < 1 || args.ids.length > 64) throw new Error('请选择完整转换结果');
+    const artifacts = args.ids.map(id => models.artifact(id));
+    const targets = new Set();
+    for (const artifact of artifacts) {
+      if (artifact.previewOnly || artifact.targetId === null) throw new Error('必须先完成转换并选择目标资源');
+      if (artifact.projectKey !== modelProjectKey()) throw new Error('当前工程与转换时的工程不一致，请重新转换');
+      if (targets.has(artifact.targetId)) throw new Error('多个模型映射到同一个资源，请修改映射后再写入');
+      targets.add(artifact.targetId);
+    }
+    const results = [];
+    for (const artifact of artifacts) {
+      try {
+        const entry = requireEntry(artifact.targetId);
+        if (entry.name !== artifact.targetName || !/\.(gsn|gso)$/i.test(entry.name)) throw new Error('目标资源标识发生变化，请重新转换');
+        const data = await fsp.readFile(path.join(artifact.directory, 'sprite.gsn'));
+        const saved = await projectStore.writeBuffer(project, entry.id, data, artifact.expectedHash);
+        artifact.expectedHash = saved.sha256;
+        textMetadata.delete(entryId(entry));
+        clearPreviewBuffer();
+        results.push({ id: artifact.id, ok: true, targetName: entry.name });
+      } catch (error) { results.push({ id: artifact.id, ok: false, error: error.message, targetName: artifact.targetName }); }
+    }
+    return { results };
+  }
+
   if (method === 'createProject') {
     const opened = await projectStore.createProject(args.path, args.directory, (value) => progress(requestId, value));
     const staged = await projectStore.stagedSnapshot(opened);
@@ -589,12 +669,14 @@ async function dispatch(method, args, requestId) {
 }
 
 async function cleanup() {
+  await models.dispose();
   clearPreviewBuffer();
 }
 
 parentPort.on('close', () => { cleanup().catch(() => {}); });
 
 parentPort.on('message', (message) => {
+  if (message?.method === 'cancelModel') { modelCanceled = true; models.cancel(); return; }
   dispatchQueue = dispatchQueue.then(async () => {
     const { requestId, method, args } = message || {};
     try {

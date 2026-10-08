@@ -382,9 +382,9 @@
         continue;
       }
       const folderOnly = ['export-folder', 'replace-folder'].includes(action);
-      const fileOnly = ['open', 'info', 'export-file', 'replace-file', 'export-editable', 'import-editable', 'reset-entry'].includes(action);
+      const fileOnly = ['model-replace', 'open', 'info', 'export-file', 'replace-file', 'export-editable', 'import-editable', 'reset-entry'].includes(action);
       button.classList.toggle('hidden', (folderOnly && !isFolder) || (fileOnly && isFolder));
-      button.disabled = state.taskBusy || (!isFolder && action === 'reset-entry' && !state.staged.has(String(node.id))) ||
+      button.disabled = state.taskBusy || (action === 'model-replace' && !/\.(gsn|gso)$/i.test(String(node.name))) || (!isFolder && action === 'reset-entry' && !state.staged.has(String(node.id))) ||
         (!isFolder && ['export-editable', 'import-editable'].includes(action) && !String(node.name).toLowerCase().endsWith('.gsa'));
     }
     for (const separator of elements.contextMenu.querySelectorAll('.menu-separator')) separator.classList.remove('hidden');
@@ -418,6 +418,10 @@
       tab.effectView = action === 'effect-structure' ? 'structure' : 'scene';
       if (isSource) state.previewRequest += 1;
       renderTextEntry(node.entry);
+      return;
+    }
+    if (action === 'model-replace' && node.type === 'file') {
+      await runTask('正在打开 3D 素材转换…', () => api.openModelStudio(node.id));
       return;
     }
     if (action === 'open' && node.type === 'file') {
