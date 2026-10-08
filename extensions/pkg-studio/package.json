@@ -1,0 +1,57 @@
+{
+  "name": "fantasy-pkg-studio",
+  "displayName": "幻想 PKG 工作室",
+  "description": "在 VS Code 原生资源管理器中浏览、预览、导出并重新打包 PKG。",
+  "version": "0.1.1",
+  "license": "MIT",
+  "publisher": "fantasy-pkg-studio",
+  "engines": { "vscode": ">=1.85.0" },
+  "categories": ["Other"],
+  "main": "./extension.js",
+  "activationEvents": ["onCommand:fantasyPkg.open", "onFileSystem:fantasypkg", "onCustomEditor:fantasyPkg.preview"],
+  "capabilities": { "virtualWorkspaces": { "supported": true } },
+  "scripts": { "package:runtime": "node ./scripts/package-runtime.cjs" },
+  "dependencies": { "pngjs": "7.0.0" },
+  "contributes": {
+    "commands": [
+      { "command": "fantasyPkg.open", "title": "打开 PKG 资源包…", "category": "幻想 PKG" },
+      { "command": "fantasyPkg.exportRaw", "title": "导出原始资源…" },
+      { "command": "fantasyPkg.replaceRaw", "title": "替换为原格式文件…" },
+      { "command": "fantasyPkg.exportFolder", "title": "导出文件夹…" },
+      { "command": "fantasyPkg.importFolder", "title": "导入文件夹替换项…" },
+      { "command": "fantasyPkg.exportPng", "title": "导出可编辑 PNG…" },
+      { "command": "fantasyPkg.importPng", "title": "将 PNG 转为 GSA 替换项…" },
+      { "command": "fantasyPkg.clearEntry", "title": "清除此文件的替换项" },
+      { "command": "fantasyPkg.clearFolder", "title": "清除此文件夹的替换项" },
+      { "command": "fantasyPkg.clearAll", "title": "清除全部替换项" },
+      { "command": "fantasyPkg.repack", "title": "重新打包并另存为…" }
+    ],
+    "customEditors": [{
+      "viewType": "fantasyPkg.preview",
+      "displayName": "PKG 预览",
+      "selector": [
+        { "filenamePattern": "*.gsa" }, { "filenamePattern": "*.gsn" },
+        { "filenamePattern": "*.gso" }, { "filenamePattern": "*.gsm" },
+        { "filenamePattern": "*.msk" }, { "filenamePattern": "*.smp" },
+        { "filenamePattern": "*.dat" }, { "filenamePattern": "*.eff" }
+      ],
+      "priority": "default"
+    }],
+    "menus": {
+      "explorer/context": [
+        { "command": "fantasyPkg.open", "when": "explorerViewletVisible", "group": "navigation" },
+        { "command": "fantasyPkg.exportRaw", "when": "resourceScheme == fantasypkg && !explorerResourceIsFolder", "group": "7_modification@1" },
+        { "command": "fantasyPkg.replaceRaw", "when": "resourceScheme == fantasypkg && !explorerResourceIsFolder", "group": "7_modification@2" },
+        { "command": "fantasyPkg.exportPng", "when": "resourceScheme == fantasypkg && !explorerResourceIsFolder && resourceExtname == .gsa", "group": "7_modification@3" },
+        { "command": "fantasyPkg.importPng", "when": "resourceScheme == fantasypkg && !explorerResourceIsFolder && resourceExtname == .gsa", "group": "7_modification@4" },
+        { "command": "fantasyPkg.clearEntry", "when": "resourceScheme == fantasypkg && !explorerResourceIsFolder", "group": "7_modification@5" },
+        { "command": "fantasyPkg.exportFolder", "when": "resourceScheme == fantasypkg && explorerResourceIsFolder", "group": "7_modification@1" },
+        { "command": "fantasyPkg.importFolder", "when": "resourceScheme == fantasypkg && explorerResourceIsFolder", "group": "7_modification@2" },
+        { "command": "fantasyPkg.clearFolder", "when": "resourceScheme == fantasypkg && explorerResourceIsFolder", "group": "7_modification@3" },
+        { "command": "fantasyPkg.clearAll", "when": "resourceScheme == fantasypkg && explorerResourceIsFolder && resourcePath == '/'", "group": "7_modification@4" },
+        { "command": "fantasyPkg.repack", "when": "resourceScheme == fantasypkg && explorerResourceIsFolder && resourcePath == '/'", "group": "7_modification@5" }
+      ]
+    }
+  },
+  "files": ["extension.js", "worker.cjs", "scripts/**", "media/**", "runtime/**", "README.md", "LICENSE"]
+}

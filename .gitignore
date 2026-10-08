@@ -1,0 +1,25 @@
+node_modules/
+dist/
+.DS_Store
+*.pkg
+*.tmp
+workspaces/
+.runtime/
+*.vsix
+extensions/pkg-studio/runtime/
+
+# Local instructions, credentials, and resource projects
+AGENTS.md
+.env
+.env.*
+!.env.example
+.npmrc
+*.pem
+*.key
+*.p12
+*.pfx
+*.log
+*.pkg-project/
+.pkg-studio/
+.vscode/
+.idea/

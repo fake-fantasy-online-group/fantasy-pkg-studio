@@ -1,0 +1,1161 @@
+{
+ "ov_RebArmAttrPurify": {
+  "header": 16,
+  "block": 6,
+  "count": 16,
+  "cols": [
+   [
+    "card_id",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "weight",
+    4,
+    2,
+    "integer"
+   ]
+  ]
+ },
+ "ov_cycletrunk": {
+  "header": 8,
+  "block": 156,
+  "count": 500,
+  "cols": [
+   [
+    "type",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "param",
+    4,
+    4,
+    "bigint"
+   ],
+   [
+    "npc",
+    8,
+    32,
+    "text"
+   ],
+   [
+    "level",
+    40,
+    4,
+    "bigint"
+   ],
+   [
+    "map",
+    44,
+    36,
+    "text"
+   ],
+   [
+    "goal",
+    80,
+    36,
+    "text"
+   ],
+   [
+    "mon_id",
+    116,
+    4,
+    "bigint"
+   ],
+   [
+    "mon",
+    120,
+    32,
+    "text"
+   ],
+   [
+    "seq",
+    152,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_pworlddefend": {
+  "header": 136,
+  "block": 24,
+  "count": 200,
+  "cols": [
+   [
+    "mon_id1",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "mon_id2",
+    4,
+    4,
+    "bigint"
+   ],
+   [
+    "gen_time",
+    8,
+    4,
+    "bigint"
+   ],
+   [
+    "gen_num",
+    12,
+    4,
+    "bigint"
+   ],
+   [
+    "mon_id3",
+    16,
+    4,
+    "bigint"
+   ],
+   [
+    "gen_num3",
+    20,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_ResRBPworld": {
+  "header": 38,
+  "block": 8,
+  "count": 20,
+  "cols": [
+   [
+    "x",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "y",
+    4,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_NewPVPGrow": {
+  "header": 20,
+  "block": 13,
+  "count": 10,
+  "cols": [
+   [
+    "grow_type",
+    0,
+    1,
+    "smallint"
+   ],
+   [
+    "material_id",
+    1,
+    4,
+    "bigint"
+   ],
+   [
+    "material_count",
+    5,
+    4,
+    "bigint"
+   ],
+   [
+    "attr_low_limit",
+    9,
+    2,
+    "integer_s"
+   ],
+   [
+    "attr_up_limit",
+    11,
+    2,
+    "integer_s"
+   ]
+  ]
+ },
+ "ov_hurtanddef": {
+  "header": 4,
+  "block": 28,
+  "count": 64,
+  "cols": [
+   [
+    "def_type",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "apply_a",
+    4,
+    4,
+    "bigint"
+   ],
+   [
+    "apply_b",
+    8,
+    4,
+    "bigint"
+   ],
+   [
+    "resist",
+    12,
+    4,
+    "bigint"
+   ],
+   [
+    "reserved",
+    16,
+    12,
+    "bytea"
+   ]
+  ]
+ },
+ "ov_attrlimit": {
+  "header": 4,
+  "block": 12,
+  "count": 32,
+  "cols": [
+   [
+    "attr_code",
+    0,
+    2,
+    "integer"
+   ],
+   [
+    "limit1",
+    2,
+    2,
+    "integer"
+   ],
+   [
+    "limit2",
+    4,
+    2,
+    "integer"
+   ],
+   [
+    "limit3",
+    6,
+    2,
+    "integer"
+   ]
+  ]
+ },
+ "ov_practise": {
+  "header": 4,
+  "block": 24,
+  "count": 32,
+  "cols": [
+   [
+    "level",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "prof_min",
+    4,
+    2,
+    "integer"
+   ],
+   [
+    "prof_max",
+    6,
+    2,
+    "integer"
+   ],
+   [
+    "title",
+    8,
+    16,
+    "text"
+   ]
+  ]
+ },
+ "ov_exceptdetail": {
+  "header": 4,
+  "block": 364,
+  "count": 40,
+  "cols": [
+   [
+    "except_level",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "last_time",
+    4,
+    2,
+    "integer"
+   ],
+   [
+    "dist",
+    6,
+    2,
+    "integer"
+   ],
+   [
+    "count",
+    8,
+    2,
+    "integer"
+   ],
+   [
+    "except_type",
+    10,
+    1,
+    "smallint"
+   ],
+   [
+    "is_remove_offline",
+    11,
+    1,
+    "smallint"
+   ],
+   [
+    "interval",
+    12,
+    2,
+    "integer"
+   ],
+   [
+    "no_inform_client",
+    14,
+    1,
+    "smallint"
+   ],
+   [
+    "target_self",
+    15,
+    1,
+    "smallint"
+   ],
+   [
+    "target_team",
+    16,
+    1,
+    "smallint"
+   ],
+   [
+    "target_mon",
+    17,
+    1,
+    "smallint"
+   ],
+   [
+    "target_nt_neutral",
+    18,
+    1,
+    "smallint"
+   ],
+   [
+    "target_nt_enemy",
+    19,
+    1,
+    "smallint"
+   ],
+   [
+    "spec_type",
+    20,
+    4,
+    "bigint"
+   ],
+   [
+    "spec_res",
+    24,
+    2,
+    "integer"
+   ],
+   [
+    "spec_param",
+    26,
+    2,
+    "integer"
+   ],
+   [
+    "results",
+    28,
+    168,
+    "bytea"
+   ]
+  ]
+ },
+ "ov_item": {
+  "header": 132,
+  "block": 10,
+  "count": 6,
+  "cols": [
+   [
+    "res0",
+    0,
+    2,
+    "integer"
+   ],
+   [
+    "op_type",
+    2,
+    2,
+    "integer"
+   ],
+   [
+    "attr_id",
+    4,
+    2,
+    "integer"
+   ],
+   [
+    "mode",
+    6,
+    1,
+    "smallint"
+   ],
+   [
+    "prob",
+    7,
+    1,
+    "smallint"
+   ],
+   [
+    "value",
+    8,
+    2,
+    "integer_s"
+   ]
+  ]
+ },
+ "ov_card": {
+  "header": 33,
+  "block": 10,
+  "count": 8,
+  "cols": [
+   [
+    "res0",
+    0,
+    2,
+    "integer"
+   ],
+   [
+    "op_type",
+    2,
+    2,
+    "integer"
+   ],
+   [
+    "attr_id",
+    4,
+    2,
+    "integer"
+   ],
+   [
+    "mode",
+    6,
+    1,
+    "smallint"
+   ],
+   [
+    "prob",
+    7,
+    1,
+    "smallint"
+   ],
+   [
+    "value",
+    8,
+    2,
+    "integer_s"
+   ]
+  ]
+ },
+ "ov_arm": {
+  "header": 227,
+  "block": 4,
+  "count": 6,
+  "cols": [
+   [
+    "card_id",
+    0,
+    2,
+    "integer"
+   ],
+   [
+    "prob",
+    2,
+    2,
+    "integer"
+   ]
+  ]
+ },
+ "ov_excesuit": {
+  "header": 132,
+  "block": 5,
+  "count": 12,
+  "cols": [
+   [
+    "ref_id",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "seq",
+    4,
+    1,
+    "smallint"
+   ]
+  ]
+ },
+ "ov_badge_upgrade": {
+  "header": 4,
+  "block": 16,
+  "count": 7,
+  "cols": [
+   [
+    "q1",
+    0,
+    2,
+    "integer"
+   ],
+   [
+    "q2",
+    2,
+    2,
+    "integer"
+   ],
+   [
+    "q3",
+    4,
+    2,
+    "integer"
+   ],
+   [
+    "q4",
+    6,
+    2,
+    "integer"
+   ],
+   [
+    "q5",
+    8,
+    2,
+    "integer"
+   ],
+   [
+    "q6",
+    10,
+    2,
+    "integer"
+   ],
+   [
+    "q7",
+    12,
+    2,
+    "integer"
+   ],
+   [
+    "q8",
+    14,
+    2,
+    "integer"
+   ]
+  ]
+ },
+ "ov_starattr": {
+  "header": 16,
+  "block": 12,
+  "count": 6,
+  "cols": [
+   [
+    "v1",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "v2",
+    4,
+    4,
+    "bigint"
+   ],
+   [
+    "v3",
+    8,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_starattr_perfect": {
+  "src": "ov_starattr",
+  "header": 89,
+  "block": 4,
+  "count": 16,
+  "cols": [
+   [
+    "arm_type",
+    0,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_starattr_excellent": {
+  "src": "ov_starattr",
+  "header": 154,
+  "block": 4,
+  "count": 16,
+  "cols": [
+   [
+    "arm_type",
+    0,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_starattr_normal": {
+  "src": "ov_starattr",
+  "header": 219,
+  "block": 4,
+  "count": 16,
+  "cols": [
+   [
+    "arm_type",
+    0,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_starattr_bad": {
+  "src": "ov_starattr",
+  "header": 284,
+  "block": 4,
+  "count": 16,
+  "cols": [
+   [
+    "arm_type",
+    0,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_pworlddefend_boss": {
+  "src": "ov_pworlddefend",
+  "header": 4936,
+  "block": 8,
+  "count": 30,
+  "cols": [
+   [
+    "boss_id",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "wave",
+    4,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_festival_award_mat": {
+  "src": "ov_festival_award",
+  "header": 4,
+  "block": 6,
+  "count": 6,
+  "cols": [
+   [
+    "material_no",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "count",
+    4,
+    2,
+    "integer"
+   ]
+  ]
+ },
+ "badge_peak_season_award_item": {
+  "src": "badge_peak_season_award",
+  "header": 13,
+  "block": 8,
+  "count": 8,
+  "cols": [
+   [
+    "item_id",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "count",
+    4,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_work_bonus": {
+  "src": "ov_work",
+  "header": 52,
+  "block": 12,
+  "count": 10,
+  "cols": [
+   [
+    "bonus_type",
+    0,
+    2,
+    "integer"
+   ],
+   [
+    "item_id",
+    2,
+    2,
+    "integer"
+   ],
+   [
+    "value",
+    4,
+    4,
+    "bigint"
+   ],
+   [
+    "res",
+    8,
+    2,
+    "integer"
+   ],
+   [
+    "prob",
+    10,
+    2,
+    "integer"
+   ]
+  ]
+ },
+ "ov_pworlddefend_pos": {
+  "src": "ov_pworlddefend",
+  "header": 88,
+  "block": 8,
+  "count": 6,
+  "cols": [
+   [
+    "x",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "y",
+    4,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_armext_prob": {
+  "src": "ov_armext",
+  "header": 135,
+  "block": 2,
+  "count": 4,
+  "cols": [
+   [
+    "attr_num",
+    0,
+    1,
+    "smallint"
+   ],
+   [
+    "prob",
+    1,
+    1,
+    "smallint"
+   ]
+  ]
+ },
+ "badge_peak_season_merit_attr_prob": {
+  "src": "badge_peak_season_merit_attr",
+  "header": 9,
+  "block": 8,
+  "count": 5,
+  "cols": [
+   [
+    "tier",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "prob",
+    4,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_hairstyle_req": {
+  "src": "ov_hairstyle",
+  "header": 24,
+  "block": 8,
+  "count": 4,
+  "cols": [
+   [
+    "req_type",
+    0,
+    2,
+    "integer"
+   ],
+   [
+    "res",
+    2,
+    2,
+    "integer"
+   ],
+   [
+    "value",
+    4,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_haircolor_req": {
+  "src": "ov_haircolor",
+  "header": 8,
+  "block": 8,
+  "count": 4,
+  "cols": [
+   [
+    "req_type",
+    0,
+    2,
+    "integer"
+   ],
+   [
+    "res",
+    2,
+    2,
+    "integer"
+   ],
+   [
+    "value",
+    4,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_armfly_dest": {
+  "src": "ov_armfly",
+  "header": 9,
+  "block": 4,
+  "count": 3,
+  "cols": [
+   [
+    "dest_arm_id",
+    0,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_festival_award_item": {
+  "src": "ov_festival_award",
+  "header": 40,
+  "block": 6,
+  "count": 2,
+  "cols": [
+   [
+    "item_id",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "count",
+    4,
+    2,
+    "integer"
+   ]
+  ]
+ },
+ "badge_peak_merit_init": {
+  "src": "badge_peak_season_merit",
+  "header": 4,
+  "block": 8,
+  "count": 2,
+  "cols": [
+   [
+    "item_id",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "count",
+    4,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "badge_peak_merit_up": {
+  "src": "badge_peak_season_merit",
+  "header": 20,
+  "block": 8,
+  "count": 2,
+  "cols": [
+   [
+    "item_id",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "count",
+    4,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "badge_peak_merit_reset": {
+  "src": "badge_peak_season_merit",
+  "header": 36,
+  "block": 8,
+  "count": 2,
+  "cols": [
+   [
+    "item_id",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "count",
+    4,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_yhfpworld_member": {
+  "src": "ov_YHFPworld",
+  "header": 600,
+  "block": 2,
+  "count": 7,
+  "cols": [
+   [
+    "tier",
+    0,
+    1,
+    "smallint"
+   ],
+   [
+    "max_member",
+    1,
+    1,
+    "smallint"
+   ]
+  ]
+ },
+ "ov_refinearm_col": {
+  "src": "ov_refinearm",
+  "header": 8,
+  "block": 3,
+  "count": 6,
+  "cols": [
+   [
+    "tier",
+    0,
+    2,
+    "integer"
+   ],
+   [
+    "val",
+    2,
+    1,
+    "smallint"
+   ]
+  ]
+ },
+ "ov_skilllimit_attr": {
+  "src": "ov_skilllimit",
+  "header": 4,
+  "block": 8,
+  "count": 10,
+  "cols": [
+   [
+    "ref_id",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "value",
+    4,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_exceptdetail_effect": {
+  "src": "ov_exceptdetail",
+  "header": 4,
+  "block": 364,
+  "count": 40,
+  "inner": {
+   "off": 196,
+   "block": 10,
+   "count": 16
+  },
+  "cols": [
+   [
+    "res0",
+    0,
+    2,
+    "integer"
+   ],
+   [
+    "op_type",
+    2,
+    2,
+    "integer"
+   ],
+   [
+    "attr_id",
+    4,
+    2,
+    "integer"
+   ],
+   [
+    "mode",
+    6,
+    1,
+    "smallint"
+   ],
+   [
+    "prob",
+    7,
+    1,
+    "smallint"
+   ],
+   [
+    "value",
+    8,
+    2,
+    "integer_s"
+   ]
+  ]
+ },
+ "ov_fmland_stone": {
+  "src": "ov_fmland",
+  "header": 204,
+  "block": 8,
+  "count": 4,
+  "cols": [
+   [
+    "x",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "y",
+    4,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_fmland_revive": {
+  "src": "ov_fmland",
+  "header": 256,
+  "block": 8,
+  "count": 4,
+  "cols": [
+   [
+    "x",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "y",
+    4,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_fmland_randborn": {
+  "src": "ov_fmland",
+  "header": 24,
+  "block": 8,
+  "count": 4,
+  "cols": [
+   [
+    "x",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "y",
+    4,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_fmland_taxmap": {
+  "src": "ov_fmland",
+  "header": 288,
+  "block": 4,
+  "count": 32,
+  "cols": [
+   [
+    "map_id",
+    0,
+    4,
+    "bigint"
+   ]
+  ]
+ },
+ "ov_fmland": {
+  "header": 56,
+  "block": 12,
+  "count": 12,
+  "cols": [
+   [
+    "gate_id",
+    0,
+    4,
+    "bigint"
+   ],
+   [
+    "x",
+    4,
+    4,
+    "bigint"
+   ],
+   [
+    "y",
+    8,
+    4,
+    "bigint"
+   ]
+  ]
+ }
+}

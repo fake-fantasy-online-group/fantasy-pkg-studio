@@ -1,0 +1,13 @@
+body { margin: 0; color: var(--vscode-editor-foreground); background: var(--vscode-editor-background); }
+#animation { min-height: 100vh; display: flex; flex-direction: column; }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--vscode-panel-border); }
+button, select, input { color: var(--vscode-foreground); background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); border-radius: 2px; font: inherit; }
+button { padding: 4px 10px; cursor: pointer; }
+button:hover { background: var(--vscode-toolbar-hoverBackground); }
+select, input[type=number] { padding: 4px 6px; }
+input[type=range] { flex: 1 1 140px; min-width: 100px; }
+label { display: inline-flex; align-items: center; gap: 6px; }
+#frame-label { min-width: 4.5em; text-align: center; font-variant-numeric: tabular-nums; }
+.stage { flex: 1; display: grid; place-items: center; min-height: 0; padding: 16px; }
+#frame-image { display: block; max-width: 100%; max-height: calc(100vh - 90px); object-fit: contain; image-rendering: pixelated; }
+#status { padding: 0 12px 8px; color: var(--vscode-errorForeground); white-space: pre-wrap; }

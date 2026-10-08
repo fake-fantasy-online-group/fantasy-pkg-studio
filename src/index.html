@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; media-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'; connect-src 'none';">
+  <title>Fake Fantasy Editor</title>
+  <link rel="stylesheet" href="./style.css">
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="titlebar" aria-label="工程标题栏"><span class="titlebar-project" id="archiveName">Fake Fantasy Editor</span></header>
+    <main class="workbench" id="workbench">
+      <aside class="explorer" id="sidebar">
+        <div class="explorer-heading"><span>资源管理器</span><span class="explorer-project" id="explorerProject"></span></div>
+        <div class="entry-list" id="entryList" role="tree" aria-label="工程文件树" tabindex="0">
+          <div class="tree-content" id="treeContent">
+            <div class="tree-empty">打开或新建一个工程</div>
+          </div>
+        </div>
+      </aside>
+      <div class="sidebar-resizer" id="sidebarResizer" role="separator" aria-orientation="vertical" aria-label="调整文件树宽度" tabindex="0"></div>
+      <section class="editor-area" aria-label="编辑器">
+        <div class="tab-strip" id="tabBar" role="tablist" aria-label="打开的文件"></div>
+        <div class="editor-heading hidden" id="editorHeading"><span class="file-kind" id="fileKind" aria-hidden="true"></span><span class="editor-breadcrumb" id="currentName">未打开文件</span><span class="heading-dirty hidden" id="headingDirty">●</span></div>
+        <div class="editor-content" id="editorContent">
+          <div class="welcome-state" id="welcomeState">
+            <div class="welcome-title">Fake Fantasy Editor</div>
+            <button type="button" class="welcome-command" id="welcomeOpenButton"><span>从 PKG 新建工程</span><kbd>⌘O</kbd></button>
+            <button type="button" class="welcome-command" id="welcomeProjectButton"><span>打开工程</span><kbd>⌘⇧O</kbd></button>
+          </div>
+          <div class="editor-wrap hidden" id="editorWrap">
+            <div class="line-gutter" id="lineGutter" aria-hidden="true"></div>
+            <div class="editor-main"><div class="editor-notice" id="editorNotice">正在读取工程文件…</div><textarea id="textEditor" class="text-editor" spellcheck="false" autocapitalize="off" autocomplete="off" disabled aria-label="资源文本编辑器"></textarea></div>
+            <div class="draft-conflict hidden" id="conflictNotice"><span>工程文件已外部修改，请复制草稿或重新载入</span><button type="button" id="reloadDiskButton">重新载入磁盘内容</button></div>
+          </div>
+          <div class="preview-area hidden" id="previewArea"><div class="table-view-tabs hidden" id="tableViewTabs" role="tablist" aria-label="数据视图"><button type="button" class="table-view-tab active" data-table-view="data" role="tab" aria-selected="true">数据查看</button><button type="button" class="table-view-tab" data-table-view="schema" role="tab" aria-selected="false">表定义</button></div><div class="preview-stage" id="previewStage"></div><div class="preview-controls hidden" id="previewControls"></div></div>
+        </div>
+      </section>
+    </main>
+    <footer class="statusbar">
+      <span class="status-led" id="statusLed"></span><span class="status-text" id="statusText">就绪</span>
+      <span class="status-spacer"></span><span id="cursorState">行 1，列 1</span><span class="status-separator"></span><span id="encodingInfo">UTF-8</span><span class="status-separator"></span><span id="formatInfo">文本</span>
+      <div class="progress-track hidden" id="progressTrack"><div class="progress-fill" id="progressFill"></div></div>
+      <span id="stagedSummary" class="status-diff"></span>
+    </footer>
+    <div class="quick-open hidden" id="quickOpen" role="dialog" aria-label="快速打开">
+      <input id="quickOpenInput" type="text" autocomplete="off" spellcheck="false" placeholder="按名称筛选文件…">
+      <div class="quick-open-results" id="quickOpenResults" role="listbox"></div>
+      <div class="quick-open-hint"><span>↑ ↓ 选择</span><span>↵ 打开</span><span>Esc 关闭</span></div>
+    </div>
+    <div class="context-menu hidden" id="contextMenu" role="menu" aria-label="文件操作">
+      <button type="button" data-action="open" role="menuitem">打开</button>
+      <button type="button" data-action="effect-preview" role="menuitem">查看预览</button>
+      <button type="button" data-action="effect-structure" role="menuitem">查看结构</button>
+      <button type="button" data-action="effect-source" role="menuitem">打开源文本</button>
+      <button type="button" data-action="info" role="menuitem">资源信息</button>
+      <div class="menu-separator"></div>
+      <button type="button" data-action="export-file" role="menuitem">导出资源</button>
+      <button type="button" data-action="export-folder" role="menuitem">导出目录</button>
+      <button type="button" data-action="replace-file" role="menuitem">替换工程文件…</button>
+      <button type="button" data-action="replace-folder" role="menuitem">导入替换目录…</button>
+      <button type="button" data-action="export-editable" role="menuitem">导出可编辑 PNG…</button>
+      <button type="button" data-action="import-editable" role="menuitem">导入转换 PNG…</button>
+      <div class="menu-separator"></div>
+      <button type="button" data-action="reset-entry" role="menuitem">还原工程文件</button>
+    </div>
+    <div class="modal-backdrop hidden" id="infoDialog" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+      <section class="info-dialog"><header><strong id="infoTitle">资源信息</strong><button type="button" id="closeInfoButton" aria-label="关闭">×</button></header><div class="info-content"><span id="infoFormat" class="info-format"></span><div id="metadataGrid" class="metadata-grid"></div></div></section>
+    </div>
+    <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,61 @@
+{
+  "name": "fake-fantasy-editor",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "description": "Fake Fantasy Editor desktop application",
+  "main": "src/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "package:app": "electron-builder",
+    "package:plugin": "npm --prefix extensions/pkg-studio run package:runtime && node scripts/package-plugin.cjs"
+  },
+  "dependencies": {
+    "pngjs": "7.0.0"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "4.0.0",
+    "electron": "44.5.1",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.fantasy.pkg-studio",
+    "productName": "Fake Fantasy Editor",
+    "asar": true,
+    "files": [
+      "src/main.cjs",
+      "src/preload.cjs",
+      "src/worker.cjs",
+      "src/project.cjs",
+      "src/pkg.cjs",
+      "src/preview.cjs",
+      "src/binary-preview.cjs",
+      "src/table-preview.cjs",
+      "src/raster-preview.cjs",
+      "src/structured-preview.cjs",
+      "src/archive-preview.cjs",
+      "src/effect-preview.cjs",
+      "src/effect-scene.cjs",
+      "src/ovplan-preview.cjs",
+      "src/formats/ovplan.json",
+      "src/formats/ovrepeat.json",
+      "src/formats/ovmanifest.json",
+      "src/proc-preview.cjs",
+      "src/dimg.cjs",
+      "src/midi-preview.cjs",
+      "src/map-preview.cjs",
+      "src/map-scene.cjs",
+      "src/map-logic.cjs",
+      "src/world-resource-preview.cjs",
+      "src/scene-contract.cjs",
+      "src/index.html",
+      "src/app.js",
+      "src/style.css",
+      "package.json",
+      "LICENSE"
+    ],
+    "directories": {
+      "output": "dist"
+    }
+  }
+}
